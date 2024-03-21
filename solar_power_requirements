@@ -1,0 +1,19 @@
+import numpy as np
+
+# Constants
+A = 1  # Area of the solar array in m^2
+efficiency_solar_panel = 0.35  # Efficiency of the solar panels
+L_TRAPPIST_1 = 3.828e26 * 0.0005  # Luminosity of TRAPPIST-1 in watts
+d_TRAPPIST_1e_AU = 0.029  # Distance of TRAPPIST-1e from TRAPPIST-1 in AU
+AU_in_meters = 1.496e11  # 1 AU in meters
+
+# Convert the distance from AU to meters
+d_TRAPPIST_1e_meters = d_TRAPPIST_1e_AU * AU_in_meters
+
+# Calculate the solar irradiance at TRAPPIST-1e
+solar_irradiance = L_TRAPPIST_1 / (4 * np.pi * (d_TRAPPIST_1e_meters**2))
+
+# Calculate the power output
+power = A * solar_irradiance * efficiency_solar_panel
+
+print(f"Power output: {power} W")
