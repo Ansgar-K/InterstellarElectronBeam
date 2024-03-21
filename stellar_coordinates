@@ -1,0 +1,112 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def ecliptic_to_cartesian(lon, lat, distance):
+    lon_rad = np.deg2rad(lon)
+    lat_rad = np.deg2rad(lat)
+    
+    x = distance * np.cos(lon_rad) * np.cos(lat_rad)
+    y = distance * np.sin(lon_rad) * np.cos(lat_rad)
+    z = distance * np.sin(lat_rad)
+    
+    return np.array([x, y, z])
+
+def distance_between_objects(obj1, obj2):
+    dx = obj1[0] - obj2[0]
+    dy = obj1[1] - obj2[1]
+    dz = obj1[2] - obj2[2]
+    
+    dx_squared = dx**2
+    dy_squared = dy**2
+    dz_squared = dz**2
+    
+    sum_squared_diff = dx_squared + dy_squared + dz_squared
+    
+    distance = np.sqrt(sum_squared_diff)
+    
+    return distance
+
+def angles(obj1, obj2):
+    # Calculate the magnitudes of the vectors
+    magnitude_obj1 = np.linalg.norm(obj1)
+    magnitude_obj2 = np.linalg.norm(obj2)
+    magnitude_obj3 = distance_between_objects(obj1, obj2)
+    
+    # Calculate the angles using the Law of Cosines
+    angle1 = np.arccos((magnitude_obj2**2 + magnitude_obj3**2 - magnitude_obj1**2) / (2 * magnitude_obj2 * magnitude_obj3))
+    angle2 = np.arccos((magnitude_obj1**2 + magnitude_obj3**2 - magnitude_obj2**2) / (2 * magnitude_obj1 * magnitude_obj3))
+    angle3 = np.arccos((magnitude_obj1**2 + magnitude_obj2**2 - magnitude_obj3**2) / (2 * magnitude_obj1 * magnitude_obj2))
+    
+    # Convert angles from radians to degrees
+    angle1_deg = np.degrees(angle1)
+    angle2_deg = np.degrees(angle2)
+    angle3_deg = np.degrees(angle3)
+    
+    return angle1_deg, angle2_deg, angle3_deg
+
+# HD 40307
+lat_hd= -83.4296   # Right Ascension in degrees
+lon_hd = 83.51224  # Declination in degrees
+ly_hd = 42.19256749   # Distance in light-years
+# Trappist 1
+lat_trap = 0.62982  # Right Ascension in degrees
+lon_trap = 345.73298  # Declination in degrees
+ly_trap = 40.540875083249396482 # Distance in light-years
+
+# Cartisian Coordinates of both planet relative to earth ecplitic
+hd40307 = ecliptic_to_cartesian(lon_hd, lat_hd, ly_hd)
+trappist1 = ecliptic_to_cartesian(lon_trap, lat_trap,ly_trap)
+earth = np.array([0, 0, 0])
+distance_trappist1_HD40307 = distance_between_objects(hd40307, trappist1)
+
+angles_between_planets = angles(hd40307, trappist1)
+
+print("Distance between two planets:", distance_trappist1_HD40307, "lightyears")
+print("Angles between planets:", angles_between_planets)
+
+# Plotting the triangle
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Define the vertices of the triangle
+vertices = np.array([hd40307, trappist1, [0, 0, 0]])
+
+# Plots the vertices
+ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], c='r', marker='o')
+
+# Defines the labels of the vertices
+# Define the labels of the vertices with angles
+labels = ['Trappist-1: {:.2f}'.format(angles_between_planets[0]), 'HD40307 {:.2f}'.format(angles_between_planets[1]), 'Earth {:.2f}'.format(angles_between_planets[2])]
+
+# Plot the vertices with labels
+for i in range(vertices.shape[0]):
+    ax.text(vertices[i, 0], vertices[i, 1], vertices[i, 2], labels[i], color='green')
+
+# Connect the vertices to form the triangle
+for i in range(vertices.shape[0]):
+    ax.plot([vertices[i, 0], vertices[(i+1)%3, 0]], 
+            [vertices[i, 1], vertices[(i+1)%3, 1]], 
+            [vertices[i, 2], vertices[(i+1)%3, 2]], c='b')
+
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+plt.show()
+
+# This second section will help us determin how much time trappist-1 has before an attack]
+# Using human era calendar
+earth_first_signal = 11920
+trappist1_first_signal = 11980
+weapon_prep_time = 1
+def attack(obj1, obj2, first_signal):
+    distance = distance_between_objects(obj1, obj2)
+    obj1_received = first_signal + distance
+    obj2_received = first_signal + 2 * distance + weapon_prep_time
+    years = obj2_received - first_signal
+    return np.array([obj1_received, obj2_received, years])
+
+# all on trappist
+attack_trappist1_HD40307 = attack(hd40307, trappist1, trappist1_first_signal)
